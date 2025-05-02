@@ -1,0 +1,335 @@
+{% extends "base.html" %}
+
+{% block title %}System Design Interview - AI Interviewer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .question-card:not(.current) {
+        display: none;
+    }
+    .feedback-area {
+        display: none;
+    }
+    .next-question {
+        display: none;
+    }
+    .whiteboard-area {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .response-area {
+        min-height: 300px;
+    }
+    .requirements-section {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    .design-sections {
+        margin-top: 20px;
+    }
+    .design-section {
+        margin-bottom: 15px;
+    }
+    .section-header {
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .component-diagram {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+        padding: 20px;
+        margin-bottom: 20px;
+        min-height: 200px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4" id="interview-container" data-interview-id="{{ interview.id }}">
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <h2>{{ interview.interview_type|capitalize }} Interview: {{ interview.interview_position }}</h2>
+            <p class="text-muted">Design scalable systems and explain your approach to receive AI feedback</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <div class="timer-container">
+                <i data-feather="clock" class="me-2"></i>
+                <span id="interview-timer" class="timer">00:00</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="progress" style="height: 8px;">
+                <div id="interview-progress" class="progress-bar" role="progressbar" style="width: 0%;" 
+                     aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+                <span id="progress-text" class="text-muted">Question 1 of {{ questions|length }}</span>
+                <span class="text-muted">{{ interview.interview_type|capitalize }} Interview</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Interview Questions -->
+    <div class="row">
+        <div class="col-12">
+            {% for question in questions %}
+            <div class="card question-card mb-4" data-question-id="{{ question.id }}">
+                <div class="card-header">
+                    <h4>Question {{ loop.index }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="question-text mb-4">
+                        <p class="fs-5">{{ question.question_text }}</p>
+                    </div>
+                    
+                    <div class="requirements-section">
+                        <h5>Key Requirements & Constraints</h5>
+                        <ul class="requirements-list" id="requirements-{{ question.id }}">
+                            <!-- Requirements will be added here dynamically -->
+                        </ul>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control requirement-input" placeholder="Add a requirement or constraint">
+                            <button class="btn btn-outline-secondary add-requirement" type="button">Add</button>
+                        </div>
+                    </div>
+
+                    <div class="design-sections">
+                        <div class="design-section">
+                            <div class="section-header">1. System Requirements & Constraints</div>
+                            <textarea class="form-control mb-3" rows="3" placeholder="Describe the functional and non-functional requirements, and any constraints..."></textarea>
+                        </div>
+                        
+                        <div class="design-section">
+                            <div class="section-header">2. High-Level Architecture</div>
+                            <textarea class="form-control mb-3" rows="3" placeholder="Describe the high-level components and their interactions..."></textarea>
+                        </div>
+                        
+                        <div class="design-section">
+                            <div class="section-header">3. Data Model & Storage</div>
+                            <textarea class="form-control mb-3" rows="3" placeholder="Describe your data model, storage choices, and data flow..."></textarea>
+                        </div>
+                        
+                        <div class="design-section">
+                            <div class="section-header">4. API Design</div>
+                            <textarea class="form-control mb-3" rows="3" placeholder="Describe your API endpoints, request/response formats, and protocols..."></textarea>
+                        </div>
+                        
+                        <div class="design-section">
+                            <div class="section-header">5. Scalability & Performance</div>
+                            <textarea class="form-control mb-3" rows="3" placeholder="Describe your scaling strategy, caching, and performance optimizations..."></textarea>
+                        </div>
+                        
+                        <div class="design-section">
+                            <div class="section-header">6. Reliability & Fault Tolerance</div>
+                            <textarea class="form-control mb-3" rows="3" placeholder="Describe your approach to reliability, fault tolerance, and disaster recovery..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="component-diagram mt-4">
+                        <h5>System Component Diagram</h5>
+                        <textarea class="form-control response-area" rows="6" placeholder="Use this space to sketch out your system components and their interactions...">{{ question.user_response or '' }}</textarea>
+                    </div>
+                    
+                    <div class="feedback-area mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <h5>AI Feedback</h5>
+                            <div class="question-score">-/100</div>
+                        </div>
+                        <div class="feedback-content">
+                            <!-- Feedback will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary submit-answer" {% if question.user_response %}style="display: none;"{% endif %}>
+                            Submit Design
+                        </button>
+                        <button class="btn btn-success next-question" {% if not question.user_response %}style="display: none;"{% endif %}>
+                            {% if loop.last %}
+                            Complete Interview
+                            {% else %}
+                            Next Question
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- Interview Complete Card -->
+            <div class="card" id="interview-complete-card" style="display: none;">
+                <div class="card-body text-center py-5">
+                    <i data-feather="check-circle" style="width: 48px; height: 48px;" class="text-success mb-3"></i>
+                    <h3>Interview Complete!</h3>
+                    <p class="lead mb-4">Thank you for completing the interview. Our AI is analyzing your system designs.</p>
+                    <form method="POST" action="{{ url_for('complete_interview', interview_id=interview.id) }}">
+                        <button type="submit" id="complete-interview" class="btn btn-lg btn-primary">
+                            View Feedback
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle requirements list
+    document.querySelectorAll('.add-requirement').forEach(button => {
+        button.addEventListener('click', function() {
+            const card = this.closest('.card');
+            const input = card.querySelector('.requirement-input');
+            const list = card.querySelector('.requirements-list');
+            
+            if (input.value.trim()) {
+                const li = document.createElement('li');
+                li.className = 'requirement-item';
+                li.innerHTML = `
+                    ${input.value}
+                    <button type="button" class="btn btn-link text-danger p-0 ms-2 remove-requirement">
+                        <i data-feather="x-circle"></i>
+                    </button>
+                `;
+                list.appendChild(li);
+                input.value = '';
+                
+                // Initialize Feather icons for the new button
+                feather.replace();
+                
+                // Add remove functionality
+                li.querySelector('.remove-requirement').addEventListener('click', function() {
+                    li.remove();
+                });
+            }
+        });
+    });
+
+    // Initialize timer
+    let startTime = new Date().getTime();
+    const timerElement = document.getElementById('interview-timer');
+    
+    setInterval(() => {
+        const currentTime = new Date().getTime();
+        const elapsedTime = Math.floor((currentTime - startTime) / 1000);
+        const minutes = Math.floor(elapsedTime / 60);
+        const seconds = elapsedTime % 60;
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }, 1000);
+
+    // Show first question
+    document.querySelector('.question-card').classList.add('current');
+
+    // Handle answer submission
+    document.querySelectorAll('.submit-answer').forEach(button => {
+        button.addEventListener('click', function() {
+            const card = this.closest('.question-card');
+            const questionId = card.dataset.questionId;
+            
+            // Collect all section responses
+            const sections = card.querySelectorAll('.design-section textarea');
+            const requirements = Array.from(card.querySelectorAll('.requirement-item')).map(item => item.textContent.trim());
+            const diagram = card.querySelector('.component-diagram textarea').value;
+            
+            // Combine all responses into a structured format
+            const response = {
+                requirements: requirements,
+                systemRequirements: sections[0].value,
+                highLevelArchitecture: sections[1].value,
+                dataModel: sections[2].value,
+                apiDesign: sections[3].value,
+                scalability: sections[4].value,
+                reliability: sections[5].value,
+                diagram: diagram
+            };
+
+            // Show loading state
+            this.disabled = true;
+            this.textContent = 'Submitting...';
+
+            // Submit the answer
+            fetch(`/interview/${interview.id}/submit_answer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    question_id: questionId,
+                    answer: JSON.stringify(response)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show feedback
+                    const feedbackArea = card.querySelector('.feedback-area');
+                    const scoreElement = feedbackArea.querySelector('.question-score');
+                    const feedbackContent = feedbackArea.querySelector('.feedback-content');
+                    
+                    feedbackArea.style.display = 'block';
+                    scoreElement.textContent = `${data.score}/100`;
+                    feedbackContent.innerHTML = data.analysis;
+                    
+                    // Hide submit button and show next button
+                    this.style.display = 'none';
+                    card.querySelector('.next-question').style.display = 'block';
+                    
+                    // Update progress
+                    updateProgress();
+                } else {
+                    alert('Error submitting answer: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error submitting answer. Please try again.');
+            })
+            .finally(() => {
+                this.disabled = false;
+                this.textContent = 'Submit Design';
+            });
+        });
+    });
+
+    // Handle next question navigation
+    document.querySelectorAll('.next-question').forEach(button => {
+        button.addEventListener('click', function() {
+            const currentCard = this.closest('.question-card');
+            const nextCard = currentCard.nextElementSibling;
+            
+            if (nextCard && nextCard.classList.contains('question-card')) {
+                currentCard.classList.remove('current');
+                nextCard.classList.add('current');
+                nextCard.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                // Show completion card
+                document.getElementById('interview-complete-card').style.display = 'block';
+                currentCard.classList.remove('current');
+            }
+        });
+    });
+
+    // Function to update progress
+    function updateProgress() {
+        const totalQuestions = document.querySelectorAll('.question-card').length;
+        const answeredQuestions = document.querySelectorAll('.question-card .feedback-area[style*="display: block"]').length;
+        const progress = (answeredQuestions / totalQuestions) * 100;
+        
+        document.getElementById('interview-progress').style.width = `${progress}%`;
+        document.getElementById('progress-text').textContent = `Question ${answeredQuestions + 1} of ${totalQuestions}`;
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Interview Setup - AI Interviewer{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row mb-4">
+        <div class="col-lg-8 mx-auto">
+            <h1>Set Up Your Interview</h1>
+            <p class="text-muted">Configure your AI interview session</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title mb-0">Interview Configuration</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('interview_setup') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-4">
+                            {{ form.interview_type.label(class="form-label") }}
+                            {% if form.interview_type.errors %}
+                                {{ form.interview_type(class="form-select is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.interview_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.interview_type(class="form-select") }}
+                            {% endif %}
+                            
+                            <!-- Interview Type Descriptions -->
+                            <div class="mt-3">
+                                <div class="interview-type-info technical" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <h6 class="alert-heading"><i data-feather="code" class="me-2"></i> Technical Interview</h6>
+                                        <p class="mb-0">Focus on coding problems, algorithms, data structures, and technical concepts specific to your role.</p>
+                                    </div>
+                                </div>
+                                <div class="interview-type-info behavioral" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <h6 class="alert-heading"><i data-feather="users" class="me-2"></i> Behavioral Interview</h6>
+                                        <p class="mb-0">Focus on soft skills, teamwork, leadership, conflict resolution, and past experiences.</p>
+                                    </div>
+                                </div>
+                                <div class="interview-type-info system_design" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <h6 class="alert-heading"><i data-feather="layers" class="me-2"></i> System Design Interview</h6>
+                                        <p class="mb-0">Focus on designing scalable systems, architecture, and high-level technical solutions to complex problems.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            {{ form.position.label(class="form-label") }}
+                            {% if form.position.errors %}
+                                {{ form.position(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.position.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.position(class="form-control", placeholder="e.g. Software Engineer, Product Manager, Data Scientist") }}
+                            {% endif %}
+                            <div class="form-text">
+                                Specify the role you're interviewing for to get more relevant questions
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6>Interview Settings</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enableTimer" checked>
+                                <label class="form-check-label" for="enableTimer">Enable Interview Timer</label>
+                            </div>
+                            <div class="form-text">
+                                Track the time spent on each question
+                            </div>
+                        </div>
+                        
+                        <!-- Information about the interview -->
+                        <div class="alert alert-secondary mb-4">
+                            <h6 class="alert-heading">What to expect:</h6>
+                            <ul class="mb-0">
+                                <li>This interview will include approximately 5 questions</li>
+                                <li>You'll receive AI-powered feedback on each response</li>
+                                <li>Complete interview feedback will be provided at the end</li>
+                                <li>You can pause and resume the interview if needed</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Interview Tips</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="interviewTips">
+                        <div class="accordion-item bg-dark border-0">
+                            <h2 class="accordion-header" id="tipHeadingOne">
+                                <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#tipCollapseOne" aria-expanded="false" aria-controls="tipCollapseOne">
+                                    <i data-feather="check-circle" class="me-2"></i> Before You Begin
+                                </button>
+                            </h2>
+                            <div id="tipCollapseOne" class="accordion-collapse collapse" aria-labelledby="tipHeadingOne" data-bs-parent="#interviewTips">
+                                <div class="accordion-body">
+                                    <ul>
+                                        <li>Find a quiet place where you won't be interrupted</li>
+                                        <li>Test your internet connection to ensure stability</li>
+                                        <li>Have a notepad ready for jotting down key points</li>
+                                        <li>Consider your answers carefully before submitting</li>
+                                        <li>Be honest in your responses for most accurate feedback</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item bg-dark border-0">
+                            <h2 class="accordion-header" id="tipHeadingTwo">
+                                <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#tipCollapseTwo" aria-expanded="false" aria-controls="tipCollapseTwo">
+                                    <i data-feather="message-circle" class="me-2"></i> Answering Effectively
+                                </button>
+                            </h2>
+                            <div id="tipCollapseTwo" class="accordion-collapse collapse" aria-labelledby="tipHeadingTwo" data-bs-parent="#interviewTips">
+                                <div class="accordion-body">
+                                    <ul>
+                                        <li>Use the STAR method (Situation, Task, Action, Result) for behavioral questions</li>
+                                        <li>Explain your thought process for technical questions</li>
+                                        <li>Include specific examples from your experience</li>
+                                        <li>Be concise while being thorough</li>
+                                        <li>Avoid vague or generic responses</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item bg-dark border-0">
+                            <h2 class="accordion-header" id="tipHeadingThree">
+                                <button class="accordion-button collapsed bg-dark" type="button" data-bs-toggle="collapse" data-bs-target="#tipCollapseThree" aria-expanded="false" aria-controls="tipCollapseThree">
+                                    <i data-feather="trending-up" class="me-2"></i> Improving Your Score
+                                </button>
+                            </h2>
+                            <div id="tipCollapseThree" class="accordion-collapse collapse" aria-labelledby="tipHeadingThree" data-bs-parent="#interviewTips">
+                                <div class="accordion-body">
+                                    <ul>
+                                        <li>Review the feedback from each question carefully</li>
+                                        <li>Focus on implementing the suggested improvements</li>
+                                        <li>Practice regularly with different question types</li>
+                                        <li>Take notes on recurring feedback patterns</li>
+                                        <li>Study the detailed analysis after each interview</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show appropriate information based on selected interview type
+    const interviewTypeSelect = document.getElementById('interview_type');
+    const infoBoxes = document.querySelectorAll('.interview-type-info');
+    
+    function updateInterviewTypeInfo() {
+        // Hide all info boxes first
+        infoBoxes.forEach(box => {
+            box.style.display = 'none';
+        });
+        
+        // Show the selected one
+        const selectedType = interviewTypeSelect.value;
+        const selectedInfo = document.querySelector(`.interview-type-info.${selectedType}`);
+        if (selectedInfo) {
+            selectedInfo.style.display = 'block';
+        }
+    }
+    
+    if (interviewTypeSelect) {
+        // Set initial state
+        updateInterviewTypeInfo();
+        
+        // Update on change
+        interviewTypeSelect.addEventListener('change', updateInterviewTypeInfo);
+    }
+    
+    // Set default interview type from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const typeParam = urlParams.get('type');
+    
+    if (typeParam && interviewTypeSelect) {
+        const options = Array.from(interviewTypeSelect.options);
+        const matchingOption = options.find(option => option.value === typeParam);
+        
+        if (matchingOption) {
+            interviewTypeSelect.value = typeParam;
+            updateInterviewTypeInfo();
+        }
+    }
+    
+    // Initialize feather icons in the dynamically shown content
+    feather.replace();
+});
+</script>
+{% endblock %}

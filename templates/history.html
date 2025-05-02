@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}Interview History - AI Interviewer{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Interview History</h1>
+            <p class="text-muted">View all your past interviews and performance</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('interview_setup') }}" class="btn btn-primary">
+                <i data-feather="plus" class="me-2"></i> New Interview
+            </a>
+        </div>
+    </div>
+    
+    <!-- History Filter Controls -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="filter-type" class="form-label">Interview Type</label>
+                            <select id="filter-type" class="form-select">
+                                <option value="all" selected>All Types</option>
+                                <option value="technical">Technical</option>
+                                <option value="behavioral">Behavioral</option>
+                                <option value="system_design">System Design</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="filter-status" class="form-label">Status</label>
+                            <select id="filter-status" class="form-select">
+                                <option value="all" selected>All Statuses</option>
+                                <option value="completed">Completed</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="abandoned">Abandoned</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="filter-sort" class="form-label">Sort By</label>
+                            <select id="filter-sort" class="form-select">
+                                <option value="date_desc" selected>Date (Newest First)</option>
+                                <option value="date_asc">Date (Oldest First)</option>
+                                <option value="score_desc">Score (Highest First)</option>
+                                <option value="score_asc">Score (Lowest First)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Interview History Performance Overview -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Performance Trend</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performance-trend-chart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Interview Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Total Interviews</span>
+                        <span class="badge bg-secondary">{{ current_user.interviews|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Completed</span>
+                        <span class="badge bg-success">{{ current_user.interviews|selectattr('status', 'eq', 'completed')|list|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>In Progress</span>
+                        <span class="badge bg-warning">{{ current_user.interviews|selectattr('status', 'eq', 'in_progress')|list|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Average Score</span>
+                        {% set completed_interviews = current_user.interviews|selectattr('status', 'eq', 'completed')|list %}
+                        {% set interviews_with_feedback = completed_interviews|selectattr('feedback', 'defined')|list %}
+                        {% set total_score = 0 %}
+                        {% for interview in interviews_with_feedback %}
+                            {% set total_score = total_score + interview.feedback.overall_score %}
+                        {% endfor %}
+                        {% if interviews_with_feedback|length > 0 %}
+                            {% set avg_score = (total_score / interviews_with_feedback|length)|round(1) %}
+                        {% else %}
+                            {% set avg_score = 0 %}
+                        {% endif %}
+                        <span class="badge bg-info">{{ avg_score }}/100</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Interview History Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Interview History</h5>
+                </div>
+                <div class="card-body">
+                    {% if current_user.interviews %}
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="interview-history-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Position</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                    <th>Score</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for interview in current_user.interviews|sort(attribute='started_at', reverse=true) %}
+                                <tr class="interview-row" 
+                                    data-type="{{ interview.interview_type }}"
+                                    data-status="{{ interview.status }}">
+                                    <td>{{ interview.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <span class="badge interview-type-badge {{ interview.interview_type }}">
+                                            {{ interview.interview_type|capitalize }}
+                                        </span>
+                                    </td>
+                                    <td>{{ interview.interview_position }}</td>
+                                    <td>
+                                        {% if interview.duration %}
+                                        {{ (interview.duration // 60)|string + 'm ' + (interview.duration % 60)|string + 's' }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if interview.status == 'completed' %}
+                                        <span class="badge bg-success">Completed</span>
+                                        {% elif interview.status == 'in_progress' %}
+                                        <span class="badge bg-warning">In Progress</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Abandoned</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if interview.feedback %}
+                                        <span class="badge 
+                                            {% if interview.feedback.overall_score >= 80 %}bg-success{% 
+                                            elif interview.feedback.overall_score >= 60 %}bg-info{% 
+                                            elif interview.feedback.overall_score >= 40 %}bg-warning{% 
+                                            else %}bg-danger{% endif %}">
+                                            {{ interview.feedback.overall_score|round|int }}/100
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if interview.status == 'completed' %}
+                                        <a href="{{ url_for('feedback', interview_id=interview.id) }}" class="btn btn-sm btn-outline-primary">
+                                            View Feedback
+                                        </a>
+                                        {% elif interview.status == 'in_progress' %}
+                                        <a href="{{ url_for('interview', interview_id=interview.id) }}" class="btn btn-sm btn-outline-warning">
+                                            Continue
+                                        </a>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-outline-secondary" disabled>
+                                            Not Available
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i data-feather="clipboard" style="width: 48px; height: 48px;" class="text-muted mb-3"></i>
+                        <h5>No interviews yet</h5>
+                        <p class="text-muted mb-4">You haven't taken any interviews yet. Start one to build your history.</p>
+                        <a href="{{ url_for('interview_setup') }}" class="btn btn-primary">Start Your First Interview</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the performance trend chart
+    initializePerformanceTrendChart();
+    
+    // Set up event listeners for filters
+    const filterType = document.getElementById('filter-type');
+    const filterStatus = document.getElementById('filter-status');
+    const filterSort = document.getElementById('filter-sort');
+    
+    if (filterType && filterStatus && filterSort) {
+        filterType.addEventListener('change', applyFilters);
+        filterStatus.addEventListener('change', applyFilters);
+        filterSort.addEventListener('change', applyFilters);
+    }
+    
+    // Apply initial filters
+    applyFilters();
+    
+    // Initialize feather icons
+    feather.replace();
+});
+
+function initializePerformanceTrendChart() {
+    const ctx = document.getElementById('performance-trend-chart');
+    if (!ctx) return;
+    
+    // Get all completed interviews with feedback
+    const interviewData = [];
+    
+    {% for interview in current_user.interviews|selectattr('status', 'eq', 'completed')|selectattr('feedback', 'defined')|sort(attribute='completed_at') %}
+    interviewData.push({
+        date: '{{ interview.completed_at.strftime("%Y-%m-%d") }}',
+        type: '{{ interview.interview_type }}',
+        score: {{ interview.feedback.overall_score }},
+        position: '{{ interview.interview_position }}'
+    });
+    {% endfor %}
+    
+    if (interviewData.length === 0) {
+        ctx.parentElement.innerHTML = '<p class="text-muted text-center py-4">No performance data available yet</p>';
+        return;
+    }
+
+    // Group data by interview type
+    const datasets = {};
+    interviewData.forEach(item => {
+        if (!datasets[item.type]) {
+            datasets[item.type] = {
+                label: item.type.charAt(0).toUpperCase() + item.type.slice(1),
+                data: [],
+                borderColor: getRandomColor(),
+                tension: 0.1
+            };
+        }
+        datasets[item.type].data.push({
+            x: item.date,
+            y: item.score
+        });
+    });
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: Object.values(datasets)
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Score (%)'
+                    }
+                },
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'day',
+                        displayFormats: {
+                            day: 'MMM d'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const data = interviewData.find(d => 
+                                d.date === context.raw.x && 
+                                d.type === context.dataset.label.toLowerCase()
+                            );
+                            return `${context.dataset.label}: ${context.raw.y}% (${data.position})`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function getRandomColor() {
+    const colors = [
+        '#FF6384',
+        '#36A2EB',
+        '#FFCE56',
+        '#4BC0C0',
+        '#9966FF',
+        '#FF9F40'
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+}
+
+function applyFilters() {
+    const typeFilter = document.getElementById('filter-type').value;
+    const statusFilter = document.getElementById('filter-status').value;
+    const sortFilter = document.getElementById('filter-sort').value;
+    
+    const rows = document.querySelectorAll('#interview-history-table tbody tr');
+    
+    rows.forEach(row => {
+        const type = row.dataset.type;
+        const status = row.dataset.status;
+        
+        const typeMatch = typeFilter === 'all' || type === typeFilter;
+        const statusMatch = statusFilter === 'all' || status === statusFilter;
+        
+        row.style.display = typeMatch && statusMatch ? '' : 'none';
+    });
+    
+    // Re-sort the visible rows
+    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
+    const tbody = document.querySelector('#interview-history-table tbody');
+    
+    visibleRows.sort((a, b) => {
+        const aDate = new Date(a.cells[0].textContent);
+        const bDate = new Date(b.cells[0].textContent);
+        const aScore = parseFloat(a.cells[5].textContent) || 0;
+        const bScore = parseFloat(b.cells[5].textContent) || 0;
+        
+        switch(sortFilter) {
+            case 'date_desc':
+                return bDate - aDate;
+            case 'date_asc':
+                return aDate - bDate;
+            case 'score_desc':
+                return bScore - aScore;
+            case 'score_asc':
+                return aScore - bScore;
+            default:
+                return 0;
+        }
+    });
+    
+    visibleRows.forEach(row => tbody.appendChild(row));
+}
+</script>
+{% endblock %}

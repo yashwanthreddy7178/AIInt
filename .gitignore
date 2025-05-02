@@ -1,0 +1,6 @@
+.env
+venv/
+instance/
+migrations/
+__pycache__/
+google_credentials.json

@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - AI Interviewer{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Your Profile</h1>
+            <p class="text-muted">Manage your personal information and settings</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('profile') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.first_name.label(class="form-label") }}
+                                {% if form.first_name.errors %}
+                                    {{ form.first_name(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.first_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.first_name(class="form-control") }}
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.last_name.label(class="form-label") }}
+                                {% if form.last_name.errors %}
+                                    {{ form.last_name(class="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.last_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.last_name(class="form-control") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.job_title.label(class="form-label") }}
+                            {% if form.job_title.errors %}
+                                {{ form.job_title(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.job_title.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.job_title(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.industry.label(class="form-label") }}
+                            {% if form.industry.errors %}
+                                {{ form.industry(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.industry.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.industry(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.experience_level.label(class="form-label") }}
+                            {% if form.experience_level.errors %}
+                                {{ form.experience_level(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.experience_level.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.experience_level(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Account Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" value="{{ current_user.username }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" value="{{ current_user.email }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Member Since</label>
+                        <input type="text" class="form-control" value="{{ current_user.created_at.strftime('%Y-%m-%d') }}" disabled>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Subscription</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <span class="subscription-badge {{ subscription.tier }}">
+                            {{ subscription.tier|capitalize }}
+                        </span>
+                    </div>
+                    
+                    <p class="mb-4">
+                        {% if subscription.tier == 'free' %}
+                        You are currently on the free plan.
+                        {% else %}
+                        Your premium subscription is active.
+                        {% endif %}
+                    </p>
+                    
+                    <a href="{{ url_for('subscription') }}" class="btn btn-primary">Manage Subscription</a>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Interview Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Total Interviews</span>
+                        <span class="badge bg-secondary">{{ current_user.interviews|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Completed Interviews</span>
+                        <span class="badge bg-success">{{ current_user.interviews|selectattr('status', 'eq', 'completed')|list|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>In Progress Interviews</span>
+                        <span class="badge bg-warning">{{ current_user.interviews|selectattr('status', 'eq', 'in_progress')|list|length }}</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Technical Interviews</span>
+                        <span class="badge bg-info">{{ current_user.interviews|selectattr('interview_type', 'eq', 'technical')|list|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Behavioral Interviews</span>
+                        <span class="badge bg-info">{{ current_user.interviews|selectattr('interview_type', 'eq', 'behavioral')|list|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>System Design Interviews</span>
+                        <span class="badge bg-info">{{ current_user.interviews|selectattr('interview_type', 'eq', 'system_design')|list|length }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

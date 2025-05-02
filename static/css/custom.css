@@ -1,0 +1,142 @@
+/* Custom CSS to complement Bootstrap */
+
+/* Interview page styling */
+.question-card {
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.question-card.current {
+    border-left: 4px solid var(--bs-primary);
+}
+
+.response-area {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.timer {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* Feedback page styling */
+.score-card {
+    text-align: center;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: var(--bs-dark);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    margin: 0 auto 1rem auto;
+}
+
+.strength-item, .weakness-item {
+    margin-bottom: 0.75rem;
+}
+
+/* Profile page styling */
+.profile-header {
+    padding: 2rem 0;
+}
+
+.subscription-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-weight: bold;
+}
+
+.subscription-badge.free {
+    background-color: var(--bs-secondary);
+    color: white;
+}
+
+.subscription-badge.premium {
+    background-color: var(--bs-warning);
+    color: var(--bs-dark);
+}
+
+/* Dashboard styling */
+.dashboard-stat-card {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.stat-label {
+    font-size: 1rem;
+    color: var(--bs-secondary);
+}
+
+/* Interview history styling */
+.interview-history-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.interview-history-item:hover {
+    background-color: var(--bs-dark);
+}
+
+.interview-type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+}
+
+.interview-type-badge.technical {
+    background-color: var(--bs-info);
+    color: var(--bs-dark);
+}
+
+.interview-type-badge.behavioral {
+    background-color: var(--bs-success);
+    color: white;
+}
+
+.interview-type-badge.system_design {
+    background-color: var(--bs-danger);
+    color: white;
+}
+
+/* Animations */
+.fade-in {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}

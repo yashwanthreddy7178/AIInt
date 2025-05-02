@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Interview Feedback - AI Interviewer{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4" id="feedback-container" data-interview-id="{{ interview.id }}">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Interview Feedback</h2>
+            <p class="text-muted">
+                {{ interview.interview_type|capitalize }} Interview for {{ interview.interview_position }}
+                <span class="ms-2 text-secondary">
+                    <i data-feather="calendar" class="me-1"></i>
+                    {{ interview.completed_at.strftime('%B %d, %Y') }}
+                </span>
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary me-2">
+                <i data-feather="arrow-left" class="me-1"></i> Dashboard
+            </a>
+            <a href="{{ url_for('interview_setup') }}" class="btn btn-primary">
+                <i data-feather="refresh-cw" class="me-1"></i> New Interview
+            </a>
+        </div>
+    </div>
+    
+    <!-- Overall Score Card -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card score-card">
+                <div class="score-circle">
+                    <span>{{ feedback.overall_score|round|int }}</span>
+                </div>
+                <h4>Overall Score</h4>
+                <p class="text-muted">
+                    {% if feedback.overall_score >= 80 %}
+                    Excellent performance!
+                    {% elif feedback.overall_score >= 60 %}
+                    Good job, with room for improvement.
+                    {% elif feedback.overall_score >= 40 %}
+                    Fair performance, needs practice.
+                    {% else %}
+                    Needs significant improvement.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Performance by Question</h5>
+                </div>
+                <div class="card-body" id="chart-container">
+                    <canvas id="performance-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Strengths and Weaknesses -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-success bg-opacity-25">
+                    <h5 class="mb-0"><i data-feather="thumbs-up" class="me-2"></i> Strengths</h5>
+                </div>
+                <div class="card-body">
+                    {% if feedback.strengths %}
+                    <div class="strengths-list">
+                        {% for strength in feedback.strengths.split('\n') %}
+                            {% if strength|trim %}
+                            <div class="strength-item">
+                                <i data-feather="check-circle" class="text-success me-2"></i>
+                                <span>{{ strength|trim }}</span>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No specific strengths identified.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-danger bg-opacity-25">
+                    <h5 class="mb-0"><i data-feather="thumbs-down" class="me-2"></i> Areas for Improvement</h5>
+                </div>
+                <div class="card-body">
+                    {% if feedback.weaknesses %}
+                    <div class="weaknesses-list">
+                        {% for weakness in feedback.weaknesses.split('\n') %}
+                            {% if weakness|trim %}
+                            <div class="weakness-item">
+                                <i data-feather="alert-circle" class="text-danger me-2"></i>
+                                <span>{{ weakness|trim }}</span>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No specific areas for improvement identified.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Improvement Suggestions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i data-feather="trending-up" class="me-2"></i> Improvement Suggestions</h5>
+                </div>
+                <div class="card-body">
+                    {% if feedback.improvement_suggestions %}
+                    <div class="suggestions-list">
+                        {% for suggestion in feedback.improvement_suggestions.split('\n') %}
+                            {% if suggestion|trim %}
+                            <div class="suggestion-item mb-3">
+                                <i data-feather="star" class="text-warning me-2"></i>
+                                <span>{{ suggestion|trim }}</span>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No specific improvement suggestions available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detailed Feedback -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i data-feather="file-text" class="me-2"></i> Detailed Feedback</h5>
+                </div>
+                <div class="card-body">
+                    {% if feedback.detailed_feedback %}
+                    <div class="detailed-feedback">
+                        {{ feedback.detailed_feedback|nl2br }}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No detailed feedback available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Questions and Answers -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i data-feather="list" class="me-2"></i> Interview Questions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for question in questions %}
+                        <a href="#" class="list-group-item list-group-item-action question-link" data-question-id="{{ question.id }}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Question {{ loop.index }}: {{ question.question_text|truncate(80) }}</h6>
+                                {% if question.score %}
+                                <span class="badge bg-secondary 
+                                    {% if question.score >= 80 %}bg-success{% 
+                                    elif question.score >= 60 %}bg-info{% 
+                                    elif question.score >= 40 %}bg-warning{% 
+                                    else %}bg-danger{% endif %}">
+                                    {{ question.score }}/100
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary">No Score</span>
+                                {% endif %}
+                            </div>
+                            <p class="mb-1">{{ question.user_response|truncate(150) }}</p>
+                            <small>Click to view detailed feedback</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Historical Performance -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i data-feather="activity" class="me-2"></i> Historical Performance</h5>
+                </div>
+                <div class="card-body" id="historical-chart-container">
+                    <canvas id="historical-performance-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Question Details Modal -->
+    <div class="modal fade" id="question-details-modal" tabindex="-1" aria-labelledby="questionDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="questionDetailsModalLabel">Question Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="question-details">
+                    <!-- Question details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/feedback.js') }}"></script>
+{% endblock %}
