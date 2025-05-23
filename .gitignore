@@ -4,3 +4,4 @@ instance/
 migrations/
 __pycache__/
 google_credentials.json
+app.db

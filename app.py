@@ -45,8 +45,7 @@ with app.app_context():
     # Import models
     from models import User, Interview, InterviewQuestion, Feedback, Subscription  # noqa: F401
     
-    # Create all tables
-    db.create_all()
+    # Remove db.create_all() since we're using Flask-Migrate
 
 # Import routes
 from auth import auth_bp
